@@ -145,7 +145,7 @@ Response:
 
 ---
 
-## 📌 Notes
+##  Notes
 
 - FAISS indices and raw documents are not stored in the repository; they are generated or fetched at runtime  
 - Designed to run in constrained environments like Hugging Face Spaces using Docker  
