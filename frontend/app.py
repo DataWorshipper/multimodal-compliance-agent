@@ -1,60 +1,64 @@
 import streamlit as st
 import requests
+import time
 
-st.set_page_config(page_title="FTC Compliance Agent", page_icon="🕵️‍♂️", layout="wide")
+st.set_page_config(page_title="FTC Compliance Agent", page_icon="", layout="wide")
 
-st.sidebar.title("About")
+HF_API_URL = "https://swdqwewfw-ftc-compliance-agent.hf.space/stream_analyze"
+
+st.sidebar.title("Agent Architecture")
 st.sidebar.info(
-    "This multimodal CRAG agent uses Gemini 2.5 Flash to audit YouTube videos against FTC guidelines. "
-    "It extracts spoken audio and on-screen OCR text, compares it against local FAISS rulebooks, "
-    "and checks the live web for recent updates."
+    "**Backend:** Dockerized FastAPI on Hugging Face\n"
+    "**Engine:** LangGraph CRAG Agent\n"
+    "**Models:** Gemini 2.0 Flash + FAISS\n"
+    "**Status:** Live via Streaming"
 )
 
-st.title(" YouTube FTC Compliance Auditor")
+st.title("YouTube FTC Compliance Auditor")
+st.markdown("Enter a YouTube URL to perform a multimodal audit of audio, OCR text, and metadata.")
 
-video_url = st.text_input(" Enter YouTube Video URL:", placeholder="https://www.youtube.com/watch?v=...")
+video_url = st.text_input("YouTube Video URL:", placeholder="https://www.youtube.com/watch?v=...")
 
-if st.button("Run Compliance Audit"):
+if st.button("Run Full Audit"):
     if not video_url:
-        st.warning(" Please enter a YouTube URL first.")
+        st.warning("Please enter a YouTube URL first.")
     else:
-        with st.spinner("Downloading video, running Gemini OCR & Audio extraction, and executing CRAG rules..."):
+        with st.status("Agent Initializing...", expanded=True) as status:
+            st.write("Connecting to Hugging Face backend...")
+            
             try:
-                hf_api_url = "https://swdqwewfw-ftc-compliance-agent.hf.space/analyze"
-                response = requests.post(hf_api_url, json={"url": video_url}, timeout=300)
-                
-                if response.status_code == 200:
-                    data = response.json()
+                with requests.post(
+                    HF_API_URL, 
+                    json={"url": video_url}, 
+                    stream=True, 
+                    timeout=600
+                ) as response:
                     
-                    final_status = data.get("final_status", "UNKNOWN").upper()
-                    if final_status == "PASS":
-                        st.success(" **STATUS: PASS** - No major compliance violations detected.")
-                    else:
-                        st.error(" **STATUS: FAIL** - Compliance violations detected.")
-                    
-                    st.subheader(" Audit Summary")
-                    st.write(data.get("final_report", "No summary provided."))
-                    
-                    issues = data.get("compliance_issues", [])
-                    if issues:
-                        st.subheader(" Detailed Violations")
-                        for issue in issues:
-                            severity = str(issue.get("severity", "Warning")).upper()
-                            category = issue.get("category", "General")
-                            desc = issue.get("description", "")
-                            
-                            if "CRITICAL" in severity or "HIGH" in severity:
-                                st.error(f"**[{severity}] {category}**: {desc}")
-                            elif "MINOR" in severity or "LOW" in severity:
-                                st.info(f"**[{severity}] {category}**: {desc}")
-                            else:
-                                st.warning(f"**[{severity}] {category}**: {desc}")
-                                
-                    elif final_status == "FAIL":
-                        st.warning("The system flagged this as a FAIL but no specific structured issues were parsed.")
+                    if response.status_code == 200:
+                        st.write("Connection established. Processing video...")
                         
-                else:
-                    st.error(f"Backend Error {response.status_code}: {response.text}")
-                    
-            except requests.exceptions.ConnectionError:
-                st.error(" Connection Refused: Your FastAPI backend isn't running. Start it on port 8000!")
+                        log_container = st.empty()
+                        full_log = ""
+                        
+                        for line in response.iter_lines():
+                            if line:
+                                decoded_line = line.decode('utf-8')
+                                full_log += decoded_line + "\n"
+                                st.write(decoded_line)
+                        
+                        status.update(label="Audit Complete", state="complete", expanded=False)
+                        st.success("Analysis Finished")
+                        
+                        st.subheader("Audit Findings")
+                        st.text_area("Final Report", value=full_log, height=300)
+                        
+                    else:
+                        status.update(label="Error", state="error")
+                        st.error(f"Backend Error {response.status_code}: {response.text}")
+                        
+            except requests.exceptions.Timeout:
+                st.error("The audit took too long (over 10 minutes). Check the video length.")
+            except Exception as e:
+                st.error(f"Critical Connection Error: {e}")
+
+st.divider()
