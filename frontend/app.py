@@ -20,7 +20,8 @@ if st.button("Run Compliance Audit"):
     else:
         with st.spinner("Downloading video, running Gemini OCR & Audio extraction, and executing CRAG rules..."):
             try:
-                response = requests.post("http://127.0.0.1:8888/analyze", json={"url": video_url})
+                hf_api_url = "https://swdqwewfw-ftc-compliance-agent.hf.space/analyze"
+                response = requests.post(hf_api_url, json={"url": video_url}, timeout=300)
                 
                 if response.status_code == 200:
                     data = response.json()
