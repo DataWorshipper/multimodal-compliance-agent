@@ -17,6 +17,10 @@ A production-grade, multi-agent system designed to audit YouTube content for FTC
 
 ---
 
+## Demo
+![Agent Dashboard](C:\Users\Abhiraj Mandal\OneDrive\Pictures\Screenshots\Screenshot (31).png)
+
+
 ##  System Architecture (CRAG Agent)
 
 The core engine is a Corrective Retrieval-Augmented Generation (CRAG) agent. It evaluates the quality of retrieved policy data and dynamically falls back to web search when local knowledge is insufficient.
