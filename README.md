@@ -18,7 +18,7 @@ A production-grade, multi-agent system designed to audit YouTube content for FTC
 ---
 
 ## Demo
-![Agent Dashboard](C:\Users\Abhiraj Mandal\OneDrive\Pictures\Screenshots\Screenshot (31).png)
+![Agent Dashboard](https://github.com/DataWorshipper/multimodal-compliance-agent/blob/main/streamlit_pic.png)
 
 
 ##  System Architecture (CRAG Agent)
